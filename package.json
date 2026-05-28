@@ -11,17 +11,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/finsweet/developer-starter.git"
+    "url": "git+https://github.com/studiorelief/iceblock-v2.git"
   },
   "bugs": {
-    "url": "https://github.com/finsweet/developer-starter/issues"
+    "url": "https://github.com/studiorelief/iceblock-v2/issues"
   },
   "type": "module",
   "main": "src/index.ts",
   "module": "src/index.ts",
-  "files": [
-    "dist"
-  ],
+  "private": true,
   "scripts": {
     "dev": "cross-env NODE_ENV=development node ./bin/build.js",
     "build": "cross-env NODE_ENV=production node ./bin/build.js",
@@ -31,12 +29,9 @@
     "format": "prettier --write ./src",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
-    "release": "changeset publish",
     "update": "pnpm update -i -L -r"
   },
   "devDependencies": {
-    "@changesets/changelog-git": "^0.2.0",
-    "@changesets/cli": "^2.27.12",
     "@eslint/js": "^9.19.0",
     "@finsweet/eslint-config": "^3.0.3",
     "@finsweet/tsconfig": "^1.4.2",
@@ -57,8 +52,5 @@
   "engines": {
     "pnpm": ">=10"
   },
-  "packageManager": "pnpm@10.2.0",
-  "publishConfig": {
-    "provenance": true
-  }
+  "packageManager": "pnpm@10.2.0"
 }
