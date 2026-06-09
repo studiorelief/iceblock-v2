@@ -1,6 +1,5 @@
 import './index.css';
 
-import { initCardsProfils } from '$utils/component/cards-profils';
 import { initFormSubmit } from '$utils/component/formSubmit';
 import { initNavbar } from '$utils/component/navbar';
 import { initPopupContact } from '$utils/component/popupContact';
@@ -9,11 +8,10 @@ import { initFsAttributesScripts } from '$utils/scripts/loadFsAttributes';
 import { initFsLibrairiesScripts } from '$utils/scripts/loadFsLibrairies';
 import { initMarker } from '$utils/scripts/marker';
 import { initMultiStep } from '$utils/scripts/multiStep';
-import { initActifsCards } from '$utils/sections/actifsCards';
+import { initResponsiveFeatures } from '$utils/scripts/responsiveFeatures';
 import { initBlogSlider } from '$utils/sections/blogSlider';
 import { initFooterLogo } from '$utils/sections/footerLogo';
 import { initGlassEffect } from '$utils/sections/glassEffect';
-import { initGlassMouseFollow } from '$utils/sections/glassMouseFollow';
 
 window.Webflow ||= [];
 window.Webflow.push(() => {
@@ -23,14 +21,15 @@ window.Webflow.push(() => {
   initMultiStep();
 
   initGlassEffect();
-  initGlassMouseFollow();
 
   initBlogSlider();
-  initCardsProfils();
   initFooterLogo();
-  initActifsCards();
 
   initNavbar();
+
+  // Desktop-only features (cards profils, actifs cards, glass mouse-follow and
+  // the hero glass) — gated on the 991px breakpoint, with a resize listener.
+  initResponsiveFeatures();
 
   initPopupContact();
   initPopupNews();
