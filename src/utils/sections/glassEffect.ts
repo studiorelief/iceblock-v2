@@ -83,6 +83,14 @@ function supportsBackdropSVGFilters(): boolean {
   const isFirefox = /Firefox/.test(ua);
   if (isWebkit || isFirefox) return false;
 
+  // SVG-in-backdrop-filter only renders reliably on desktop Chromium. Mobile
+  // Chromium (Android Chrome) parses the `url()` syntax — so the probe below
+  // passes — yet the displacement filter renders blank or janky on mobile GPUs.
+  // Force the fallback on touch/coarse-pointer devices so every phone gets the
+  // same deterministic look instead of a broken SVG.
+  const isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+  if (isTouch) return false;
+
   const probe = document.createElement('div');
   probe.style.backdropFilter = 'url(#__glass_probe__)';
   return probe.style.backdropFilter !== '';

@@ -6,5 +6,23 @@
 /* Border on the mobile container only while the nav is open. */
 [navbar='container-mobile'].is-nav-open {
   border: 1px solid
-    color-mix(in hsl, var(--neutral--greyscale-0) 30%, var(--_theme---border-color--transparent) 70%);
+    color-mix(
+      in hsl,
+      var(--neutral--greyscale-0) 30%,
+      var(--_theme---border-color--transparent) 70%
+    );
+}
+
+@media (max-width: 1424px) {
+  .nav_menu_navigation,
+  .nav_menu,
+  .navbar_pc-container {
+    column-gap: var(--_layout---spacing--large);
+  }
+}
+
+@media (max-width: 800px) {
+  .nav_menu_cta-w.is-mobile.is-responsive {
+    display: none;
+  }
 }
