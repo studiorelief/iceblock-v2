@@ -24,7 +24,7 @@ export function initBlogSlider(): void {
   elements.forEach((el) => {
     const swiper = new Swiper(el, {
       modules: [Mousewheel],
-      slidesPerView: 1.5,
+      slidesPerView: 1.25,
       spaceBetween: 16 * 1.5,
       grabCursor: true,
       // centeredSlides: true,
