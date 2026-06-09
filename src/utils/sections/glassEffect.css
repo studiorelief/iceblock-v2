@@ -1,0 +1,136 @@
+/*
+ * GLASS EFFECT — adapted from reactbits.dev/components/glass-surface
+ * Paired with src/utils/glassEffect.ts
+ */
+
+/*
+ * NAV ADJ
+ */
+
+.navbar_logo-container[glass-effect] {
+  overflow: visible;
+}
+
+[glass-effect] {
+  position: relative;
+  overflow: hidden;
+  transition: opacity 0.26s ease-out;
+}
+
+.glass-surface__filter {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  z-index: -1;
+}
+
+.glass-surface--svg {
+  background: hsl(0 0% 100% / var(--glass-frost, 0));
+  backdrop-filter: var(--filter-id, url(#glass-filter)) saturate(var(--glass-saturation, 1))
+    blur(var(--glass-backdrop-blur, 0px));
+  -webkit-backdrop-filter: var(--filter-id, url(#glass-filter)) saturate(var(--glass-saturation, 1))
+    blur(var(--glass-backdrop-blur, 0px));
+  box-shadow:
+    0 0 2px 1px color-mix(in oklch, black, transparent 85%) inset,
+    0 0 10px 4px color-mix(in oklch, black, transparent 90%) inset,
+    0 4px 16px rgba(17, 17, 26, 0.05),
+    0 8px 24px rgba(17, 17, 26, 0.05),
+    0 16px 56px rgba(17, 17, 26, 0.05),
+    0 4px 16px rgba(17, 17, 26, 0.05) inset,
+    0 8px 24px rgba(17, 17, 26, 0.05) inset,
+    0 16px 56px rgba(17, 17, 26, 0.05) inset;
+}
+
+/* Highlight gradient border — the key to the "liquid glass" look */
+.glass-surface--svg::before,
+.glass-surface--fallback::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.2) 30%,
+    rgba(255, 255, 255, 0.05) 60%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Fallback for Safari/Firefox (no SVG backdrop-filter support) */
+.glass-surface--fallback {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(calc(12px + var(--glass-backdrop-blur, 0px))) saturate(1.8) brightness(1.1);
+  -webkit-backdrop-filter: blur(calc(12px + var(--glass-backdrop-blur, 0px))) saturate(1.8)
+    brightness(1.1);
+  box-shadow:
+    0 8px 32px 0 rgba(31, 38, 135, 0.2),
+    0 2px 16px 0 rgba(31, 38, 135, 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .glass-surface--svg {
+    background: hsl(0 0% 0% / var(--glass-frost, 0));
+    box-shadow:
+      0 0 2px 1px color-mix(in oklch, white, transparent 65%) inset,
+      0 0 10px 4px color-mix(in oklch, white, transparent 85%) inset,
+      0 4px 16px rgba(17, 17, 26, 0.05),
+      0 8px 24px rgba(17, 17, 26, 0.05),
+      0 16px 56px rgba(17, 17, 26, 0.05),
+      0 4px 16px rgba(17, 17, 26, 0.05) inset,
+      0 8px 24px rgba(17, 17, 26, 0.05) inset,
+      0 16px 56px rgba(17, 17, 26, 0.05) inset;
+  }
+
+  .glass-surface--fallback {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px) saturate(1.8) brightness(1.2);
+    -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.2);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+      inset 0 -1px 0 0 rgba(255, 255, 255, 0.1);
+  }
+}
+
+@supports not (backdrop-filter: blur(10px)) {
+  .glass-surface--fallback {
+    background: rgba(255, 255, 255, 0.4);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
+      inset 0 -1px 0 0 rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* Temporarily disabled glass (e.g. while the mobile nav is open) — drop the
+   expensive backdrop-filter so animations stay smooth. */
+.glass-surface--disabled {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+.glass-surface--disabled::before {
+  display: none;
+}
+
+[glass-effect]:focus-visible {
+  outline: 2px solid #007aff;
+  outline-offset: 2px;
+}

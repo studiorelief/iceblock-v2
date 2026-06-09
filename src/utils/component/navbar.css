@@ -1,0 +1,10 @@
+/* Navbar mobile — clip the dropdown while its height animates open/closed. */
+[navbar='menu-wrapper'] {
+  overflow: hidden;
+}
+
+/* Border on the mobile container only while the nav is open. */
+[navbar='container-mobile'].is-nav-open {
+  border: 1px solid
+    color-mix(in hsl, var(--neutral--greyscale-0) 30%, var(--_theme---border-color--transparent) 70%);
+}

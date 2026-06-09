@@ -1,0 +1,13 @@
+@media (max-width: 1424px) {
+  .nav_menu_navigation,
+  .nav_menu,
+  .navbar_pc-container {
+    column-gap: var(--_layout---spacing--large);
+  }
+}
+
+@media (max-width: 800px) {
+  .nav_menu_cta-w.is-mobile.is-responsive {
+    display: none;
+  }
+}

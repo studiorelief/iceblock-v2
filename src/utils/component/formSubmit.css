@@ -1,0 +1,5 @@
+/* Submit button sending state — see formSubmit.ts */
+
+[data-form='submit-btn'].is-sending {
+  padding-right: 1.25rem !important;
+}

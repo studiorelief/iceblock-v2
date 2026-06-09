@@ -1,0 +1,28 @@
+/*
+ *============================================================================
+ * MULTI-STEP FORM — isole le fade sur .popup_right
+ *============================================================================
+ * Par défaut le fade s'applique à tout le wrapper [data-form="step"], ce qui
+ * fait fader .popup_left avec (l'opacité d'un parent s'applique à ses enfants).
+ * On neutralise donc le fade du wrapper et on le ré-applique uniquement sur
+ * .popup_right. Comme le script bascule les steps en display, l'animation se
+ * rejoue automatiquement à chaque réaffichage de step.
+ */
+
+[data-form='step'] {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+@keyframes popup-right-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+[data-form='step'] .popup_right {
+  animation: popup-right-fade-in 0.8s ease both;
+}

@@ -1,0 +1,6 @@
+/* Newsletter popup — see popupNews.ts.
+   Scroll lock (.u-popup-open) is shared with popupContact.css. */
+
+[popup-news='component'] {
+  display: none;
+}

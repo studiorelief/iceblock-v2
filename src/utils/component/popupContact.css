@@ -1,0 +1,18 @@
+/* Contact popup — see popupContact.ts */
+
+[popup-contact='component'] {
+  display: none;
+}
+
+/* Scroll lock while the popup is open. */
+.u-popup-open {
+  overflow: hidden;
+}
+
+.popup_close_icon {
+  transition: transform 0.3s ease-out;
+}
+
+.popup_close_icon:hover {
+  transform: rotate(90deg);
+}

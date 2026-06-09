@@ -1,0 +1,4 @@
+/* Blog slider — let neighboring slides bleed outside the container. */
+.swiper.is-blog {
+  overflow: visible;
+}

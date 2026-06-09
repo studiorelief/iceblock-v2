@@ -1,3 +1,11 @@
-body {
-  background-color: var(--brand--blue);
-}
+@import './utils/sections/glassEffect.css';
+@import './utils/sections/glassMouseFollow.css';
+@import './utils/sections/blogSlider.css';
+@import './utils/component/button.css';
+@import './utils/component/popupContact.css';
+@import './utils/component/popupNews.css';
+@import './utils/component/formSubmit.css';
+@import './utils/component/cards-profils.css';
+@import './utils/component/cards-team.css';
+@import './utils/scripts/multiStep.css';
+@import './utils/global/responsive.css';

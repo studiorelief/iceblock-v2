@@ -1,0 +1,32 @@
+.button_main_icon {
+  transition: transform 0.3s ease-out;
+}
+
+.button_main_wrap:hover .button_main_icon {
+  transform: translateX(100%);
+}
+
+/* Form */
+
+.popup_radio-wrapper {
+  transition:
+    border-color 0.3s ease-out,
+    background-color 0.3s ease-out;
+}
+
+.popup_radio-wrapper:has(.w-radio-input.w--redirected-checked) {
+  border-color: var(--_theme---border-color--tertiary);
+  background-color: var(--_theme---background--secondary);
+}
+
+.popup_main_icon-w {
+  transform: rotateY(180deg);
+}
+
+.popup_main_icon {
+  transition: transform 0.3s ease-out;
+}
+
+.popup_back-wrapper:hover .popup_main_icon {
+  transform: translateX(100%);
+}
