@@ -4,62 +4,65 @@
 
 /* Toutes les cartes partagent la largeur via flex-grow. `min-width: 0` autorise
    le shrink réel (sinon min-width: auto bloque). */
-.profils_cards {
-  font-size: 1vw;
-  flex: 1 1 0%;
-  min-width: 0;
-}
 
-/* Carte ouverte par défaut : ~2x plus large (40% vs 20%). */
-#start-active {
-  flex-grow: 2;
-}
+@media (min-width: 992px) {
+  .profils_cards {
+    font-size: 1vw;
+    flex: 1 1 0%;
+    min-width: 0;
+  }
 
-/* Le contenu occupe toute la largeur de la card (sinon shrink-to-fit → reflow). */
-.profils_cards_content {
-  width: 100%;
-}
+  /* Carte ouverte par défaut : ~2x plus large (40% vs 20%). */
+  #start-active {
+    flex-grow: 2;
+  }
 
-/* Titre : wrapper créé en JS contenant deux calques superposés et alignés en bas
+  /* Le contenu occupe toute la largeur de la card (sinon shrink-to-fit → reflow). */
+  .profils_cards_content {
+    width: 100%;
+  }
+
+  /* Titre : wrapper créé en JS contenant deux calques superposés et alignés en bas
    (h3 « wrap » = 2 lignes / h3 « nowrap » = 1 ligne). GSAP fait un crossfade entre
    les deux et anime la hauteur du wrapper pour absorber le reflow sans saut. */
-.profils_cards_heading {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-}
+  .profils_cards_heading {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+  }
 
-.profils_cards_heading > h3 {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  margin: 0;
-}
+  .profils_cards_heading > h3 {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    margin: 0;
+  }
 
-/* Calque « ouvert » : titre forcé sur une seule ligne, jamais de reflow. */
-.profils_cards_heading > h3.is-nowrap {
-  white-space: nowrap;
-}
+  /* Calque « ouvert » : titre forcé sur une seule ligne, jamais de reflow. */
+  .profils_cards_heading > h3.is-nowrap {
+    white-space: nowrap;
+  }
 
-/* Description : révélée par la hauteur (0 → auto), sans wrap ni espace réservé. */
-.profils_cards-description {
-  height: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  opacity: 0;
-}
+  /* Description : révélée par la hauteur (0 → auto), sans wrap ni espace réservé. */
+  .profils_cards-description {
+    height: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    opacity: 0;
+  }
 
-.profils_loader-wrapper {
-  opacity: 0;
-}
+  .profils_loader-wrapper {
+    opacity: 0;
+  }
 
-/* Carte ouverte par défaut : description déployée + loader visibles au premier paint. */
-#start-active .profils_cards-description {
-  height: auto;
-  opacity: 1;
-}
+  /* Carte ouverte par défaut : description déployée + loader visibles au premier paint. */
+  #start-active .profils_cards-description {
+    height: auto;
+    opacity: 1;
+  }
 
-#start-active .profils_loader-wrapper {
-  opacity: 1;
+  #start-active .profils_loader-wrapper {
+    opacity: 1;
+  }
 }
