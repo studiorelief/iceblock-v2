@@ -11,7 +11,8 @@
  *  - `background`       : the backdrop, fades in.
  *
  * Below BREAKPOINT the desktop DOM is hidden and the mobile DOM takes over.
- * Opening drops the menu down (height 0 → auto) while the backdrop fades in;
+ * Opening drops the menu down (height 0 → calc(100svh - 7.5rem)) while the
+ * backdrop fades in;
  * closing plays it in reverse. Clicking outside the mobile container, or
  * resizing back to desktop, closes an open nav.
  */
@@ -23,6 +24,7 @@ import gsap from 'gsap';
 import { setGlassEffectActive } from '$utils/sections/glassEffect';
 
 const BREAKPOINT = 1340;
+const MENU_OPEN_HEIGHT = 'calc(100svh - 7.5rem)';
 
 interface NavbarState {
   containerPc: HTMLElement;
@@ -56,16 +58,21 @@ function openNav(state: NavbarState): void {
   state.menuWrapper.style.display = 'flex';
   state.background.style.display = 'block';
 
+  // Measure the target height in px (GSAP can't interpolate a calc() string),
+  // then settle back to the calc value so it stays responsive to viewport changes.
+  state.menuWrapper.style.height = MENU_OPEN_HEIGHT;
+  const targetHeight = state.menuWrapper.offsetHeight;
+
   state.timeline?.kill();
   state.timeline = gsap.timeline({
-    onComplete: () => gsap.set(state.menuWrapper, { height: 'auto' }),
+    onComplete: () => gsap.set(state.menuWrapper, { height: MENU_OPEN_HEIGHT, overflowY: 'auto' }),
   });
   state.timeline
     .fromTo(state.background, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: 'power2.out' })
     .fromTo(
       state.menuWrapper,
       { height: 0, opacity: 0 },
-      { height: 'auto', opacity: 1, duration: 0.5, ease: 'power3.out' },
+      { height: targetHeight, opacity: 1, duration: 0.5, ease: 'power3.out' },
       '<'
     );
 }
@@ -79,10 +86,13 @@ function closeNav(state: NavbarState): void {
 
   state.timeline?.kill();
 
+  // Clip again during the collapse so the scrollbar doesn't flash.
+  gsap.set(state.menuWrapper, { overflowY: 'hidden' });
+
   const hide = () => {
     state.menuWrapper.style.display = 'none';
     state.background.style.display = 'none';
-    gsap.set(state.menuWrapper, { clearProps: 'height,opacity' });
+    gsap.set(state.menuWrapper, { clearProps: 'height,opacity,overflowY' });
     // Restore the glass once the menu is fully collapsed (closed bar = glass).
     setGlassEffectActive(state.containerMobile, true);
     state.containerMobile.classList.remove('is-nav-open');

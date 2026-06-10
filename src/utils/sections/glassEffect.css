@@ -13,7 +13,7 @@
 
 [glass-effect] {
   position: relative;
-  overflow: hidden;
+  /* overflow: hidden; */
   transition: opacity 0.26s ease-out;
 }
 
