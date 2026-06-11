@@ -52,7 +52,7 @@
     opacity: 0;
   }
 
-  .profils_loader-wrapper {
+  [data-wf--cards-profils--variant='accordion'] .profils_loader-wrapper {
     opacity: 0;
   }
 
