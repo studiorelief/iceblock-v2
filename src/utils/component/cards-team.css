@@ -5,20 +5,20 @@
     opacity 0.4s ease-out;
 }
 
-[data-wf--cards-team--variant='team'].team_cards-infos {
+[data-wf--cards-team--variant='team'] .team_cards-infos {
   transform: translateY(0%);
   transition: transform 0.4s ease-out;
 }
 
-[data-wf--cards-team--variant='team'].team_cards:hover .team_cards-hover {
+[data-wf--cards-team--variant='team']:hover .team_cards-hover {
   transform: translateY(0%);
   opacity: 1;
 }
 
-[data-wf--cards-team--variant='team'].team_cards:hover .team_cards-infos {
-  transform: translateY(110%);
+[data-wf--cards-team--variant='team']:hover .team_cards-infos {
+  transform: translateY(120%);
 }
 
-[data-wf--cards-team--variant='team'].team_cards:hover .team_cards-infos.is-hover {
+[data-wf--cards-team--variant='team']:hover .team_cards-infos.is-hover {
   transform: translateY(0%);
 }

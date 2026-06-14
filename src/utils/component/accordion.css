@@ -1,0 +1,11 @@
+.accordion_icon {
+  transition: transform 0.3s ease-out;
+}
+
+.accordion_item:hover .accordion_icon {
+  transform: translateX(100%);
+}
+
+.accordion_item.is-active-accordion .accordion_icon {
+  transform: rotate(-90deg);
+}
