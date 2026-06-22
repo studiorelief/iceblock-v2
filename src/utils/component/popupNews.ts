@@ -99,4 +99,6 @@ export function initPopupNews(): void {
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') closePopup(state);
   });
+
+  window.addEventListener('popup:close-all', () => closePopup(state));
 }

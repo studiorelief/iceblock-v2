@@ -3,6 +3,32 @@
   overflow: hidden;
 }
 
+/* Horizontal gradient that fades in once the page scrolls past the top.
+   Painted behind the nav content (z-index: -1) so links keep their contrast,
+   and on top of the glass backdrop-filter (descendants aren't blurred by it). */
+[navbar='container-pc']::after,
+[navbar='container-mobile']::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    rgba(233, 236, 239, 0.4) 0%,
+    rgba(233, 236, 239, 0.8) 50%,
+    rgba(233, 236, 239, 0.4) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+  pointer-events: none;
+  z-index: -1;
+}
+
+[navbar='container-pc'].is-scrolled::after,
+[navbar='container-mobile'].is-scrolled::after {
+  opacity: 1;
+}
+
 /* Border on the mobile container only while the nav is open. */
 [navbar='container-mobile'].is-nav-open {
   border: 1px solid

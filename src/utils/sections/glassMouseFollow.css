@@ -1,8 +1,9 @@
 /*
- * GLASS MOUSE FOLLOW — paired with src/utils/glassMouseFollow.ts
- * The `.glass-follow` class is added by JS to the element that should
- * track the cursor. Position is preserved (whatever Webflow set);
- * only `transform` is animated by JS as a delta from the static position.
+ * GLASS BOUNCE — paired with src/utils/sections/glassMouseFollow.ts
+ * The `.glass-follow` class is added by JS to the element that drifts
+ * and bounces inside its container (DVD-screensaver style). Position is
+ * preserved (whatever Webflow set); only `transform` is animated by JS
+ * as a delta from the static position.
  */
 
 .glass-follow {
@@ -11,11 +12,11 @@
 }
 
 /*
- * Layering — keep interactive elements above the moving glass.
- * `.glass-follow` uses `transform`, which creates its own stacking
- * context and paints above normal-flow siblings. Promoting links and
- * buttons to a positioned layer with z-index puts them back on top
- * without touching the glass's transform.
+ * Layering — keep interactive elements above the bouncing glass.
+ * `.glass-follow` uses `transform`, which creates its own stacking context
+ * and paints above normal-flow siblings. A bare `z-index` on the button
+ * isn't enough — it needs `position` to take effect — so we promote links
+ * and buttons to a positioned layer with z-index to sit back on top.
  */
 .section_home-hero a,
 .section_home-hero button,

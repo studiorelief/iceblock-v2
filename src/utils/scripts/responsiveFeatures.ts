@@ -16,7 +16,7 @@
  */
 
 import { destroyCardsProfils, initCardsProfils } from '$utils/component/cards-profils';
-import { destroyActifsCards, initActifsCards } from '$utils/sections/actifsCards';
+// import { destroyActifsCards, initActifsCards } from '$utils/sections/actifsCards';
 import { destroyGlassMouseFollow, initGlassMouseFollow } from '$utils/sections/glassMouseFollow';
 
 const BREAKPOINT = 991;
@@ -32,13 +32,13 @@ function isMobile(): boolean {
 
 function enableDesktop(): void {
   initCardsProfils();
-  initActifsCards();
+  // initActifsCards();
   initGlassMouseFollow();
 }
 
 function disableForMobile(): void {
   destroyCardsProfils();
-  destroyActifsCards();
+  // destroyActifsCards();
   destroyGlassMouseFollow();
 }
 

@@ -56,13 +56,38 @@
     opacity: 0;
   }
 
+  /* Variante full : loader (donc les bars) masqué au repos via l'opacité du
+     wrapper, révélé au hover par GSAP. La bar s'anime en width (mesurée), donc
+     pas de transform de base ici — l'opacité du wrapper suffit à l'anti-FOUC.
+     Webflow force `opacity: 1` en full via `.w-variant-…:where()` (spécificité
+     0,1,0) ; on l'écrase ici (0,2,0) pour partir masqué sur desktop. Le
+     `@media max-width: 991px` de Webflow garde le loader visible en mobile. */
+  [data-wf--cards-profils--variant='full'] .profils_loader-wrapper,
+  .profils_loader-wrapper.w-variant-70381d8e-2b00-9605-00f0-11e11ebf224b {
+    opacity: 0;
+  }
+
+  /* Variante accordion : bar remplie via scaleX (origine gauche) par GSAP. Vide
+     au premier paint pour éviter le flash « pleine puis vide ». */
+  [data-wf--cards-profils--variant='accordion'] .profils_loader-bar {
+    transform: scaleX(0);
+    transform-origin: left center;
+    will-change: transform;
+  }
+
   /* Carte ouverte par défaut : description déployée + loader visibles au premier paint. */
   #start-active .profils_cards-description {
     height: auto;
     opacity: 1;
   }
 
+  /* `#start-active` est propre à la carte par défaut de l'accordion : loader + bar
+     pleins au premier paint (pas besoin de scoper à la variante). */
   #start-active .profils_loader-wrapper {
     opacity: 1;
+  }
+
+  #start-active .profils_loader-bar {
+    transform: scaleX(1);
   }
 }

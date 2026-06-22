@@ -17,20 +17,37 @@
  * 2 lignes) — et on crossfade entre les deux + on anime la hauteur du wrapper.
  * Comme aucun des deux calques ne reflow, le swap est propre dans les deux sens.
  *
- * Markup attendu (Webflow) :
+ * Deux variantes (attribut Webflow `data-wf--cards-profils--variant`) :
+ *  - `accordion` : comportement décrit ci-dessus ; la bar du loader
+ *    (`.profils_loader-bar`) se remplit (0 → pleine) quand la carte devient active.
+ *  - `full` : pas d'accordéon (cartes à largeur fixe, conteneur en grille
+ *    `.profils-full_cards-wrapper`). Chaque carte est indépendante — au survol
+ *    elle révèle son loader et remplit sa bar.
+ *
+ * Markup attendu (Webflow), accordion :
  *   .profils_cards-wrapper > .profils_cards (#start-active sur l'une d'elles)
- *     .profils_cards > .profils_loader-wrapper
+ *     .profils_cards > .profils_loader-wrapper > .profils_loader-bar
  *                    > .profils_cards_content > h3 + .profils_cards-description
  */
 
 import { gsap } from 'gsap';
 
-const WRAPPER = '.profils_cards-wrapper';
+// Conteneurs : l'accordion vit dans `.profils_cards-wrapper`, la variante full
+// dans `.profils-full_cards-wrapper` (grille). On gère les deux.
+const WRAPPER = '.profils_cards-wrapper, .profils-full_cards-wrapper';
 const CARD = '.profils_cards';
 const HEADING = '.profils_cards_content h3';
 const DESCRIPTION = '.profils_cards-description';
 const LOADER = '.profils_loader-wrapper';
+const LOADER_BAR = '.profils_loader-bar';
 const DEFAULT_ACTIVE = '#start-active';
+
+const VARIANT_ATTR = 'data-wf--cards-profils--variant';
+const VARIANT_FULL = 'full';
+// Classe générée par Webflow pour la variante « full » (posée sur .profils_cards
+// et .profils_loader-wrapper). Sert de signal de détection fiable, en plus de
+// l'attribut de variante.
+const VARIANT_FULL_CLASS = 'w-variant-70381d8e-2b00-9605-00f0-11e11ebf224b';
 
 const HEADING_BOX_CLASS = 'profils_cards_heading';
 const HEADING_NOWRAP_CLASS = 'is-nowrap';
@@ -41,6 +58,11 @@ const GROW_INACTIVE = 1;
 const DURATION = 0.55;
 const EASE = 'power3.out';
 
+// Remplissage de la bar de chargement : plus lent et plus appuyé que le reste
+// de l'accordéon, pour qu'on voie bien le passage 0 → pleine.
+const BAR_DURATION = 1.2;
+const BAR_EASE = 'power2.out';
+
 interface CardRefs {
   card: HTMLElement;
   headingBox: HTMLElement | null;
@@ -48,6 +70,7 @@ interface CardRefs {
   headingLine: HTMLElement | null; // calque nowrap (ouvert = 1 ligne)
   description: HTMLElement | null;
   loader: HTMLElement | null;
+  loaderBars: HTMLElement[];
 }
 
 interface WrapperState {
@@ -109,8 +132,45 @@ function getRefs(card: HTMLElement): CardRefs {
     card,
     description: card.querySelector<HTMLElement>(DESCRIPTION),
     loader: card.querySelector<HTMLElement>(LOADER),
+    loaderBars: Array.from(card.querySelectorAll<HTMLElement>(LOADER_BAR)),
     ...buildHeading(card),
   };
+}
+
+/**
+ * Remplit les bars (0 → pleine) ou les vide, via `scaleX`. Utilisé par l'accordéon :
+ * la carte active s'élargit en continu, donc scaleX suit la largeur live sans
+ * mesure (insensible au reflow). Origine gauche fixée en CSS.
+ */
+function setLoaderBars(bars: HTMLElement[], active: boolean, instant = false): void {
+  if (!bars.length) return;
+  const duration = instant || reducedMotion() ? 0 : BAR_DURATION;
+  gsap.to(bars, { scaleX: active ? 1 : 0, duration, ease: BAR_EASE, overwrite: 'auto' });
+}
+
+/**
+ * Remplit les bars (0 → largeur renseignée) ou les vide, en animant `width`.
+ * Réservé à la variante `full` (cartes à largeur fixe) : on mesure la largeur
+ * native déclarée de chaque bar puis on anime de 0 jusqu'à elle. Mesure faite à
+ * chaque ouverture → insensible au resize. Toutes les bars sont remises à leur
+ * largeur native d'un coup avant de mesurer, pour une mesure cohérente (le
+ * wrapper est un flex `space-between`).
+ */
+function setLoaderBarsWidth(bars: HTMLElement[], active: boolean): void {
+  if (!bars.length) return;
+  const duration = reducedMotion() ? 0 : BAR_DURATION;
+  if (!active) {
+    gsap.to(bars, { width: 0, duration, ease: BAR_EASE, overwrite: 'auto' });
+    return;
+  }
+  // clearProps (et non width: '') pour vraiment retirer le width inline et
+  // retomber sur la largeur CSS (#id .profils_loader-bar { width: x% }) à mesurer.
+  gsap.set(bars, { clearProps: 'width' });
+  const targets = bars.map((bar) => bar.offsetWidth);
+  gsap.set(bars, { width: 0 }); // point de départ synchrone (pas de flash)
+  bars.forEach((bar, i) => {
+    gsap.to(bar, { width: targets[i], duration, ease: BAR_EASE, overwrite: 'auto' });
+  });
 }
 
 /**
@@ -130,7 +190,7 @@ function syncCloseLayerWidth(state: WrapperState): void {
 
 /** Anime une carte vers son état actif ou replié. `instant` saute l'animation. */
 function setCardState(refs: CardRefs, active: boolean, instant = false): void {
-  const { card, headingBox, headingWrap, headingLine, description, loader } = refs;
+  const { card, headingBox, headingWrap, headingLine, description, loader, loaderBars } = refs;
   const duration = instant || reducedMotion() ? 0 : DURATION;
 
   gsap.to(card, {
@@ -173,6 +233,8 @@ function setCardState(refs: CardRefs, active: boolean, instant = false): void {
       overwrite: 'auto',
     });
   }
+
+  setLoaderBars(loaderBars, active, instant);
 }
 
 function setupWrapper(wrapper: HTMLElement): void {
@@ -211,6 +273,61 @@ function setupWrapper(wrapper: HTMLElement): void {
   });
 }
 
+/**
+ * Détecte la variante « full ». Webflow l'expose de deux façons, toutes deux
+ * portées par la carte `.profils_cards` (descendant du wrapper) : l'attribut de
+ * variante et une classe générée. On teste les deux dans les descendants.
+ */
+function isFullVariant(wrapper: HTMLElement): boolean {
+  return !!wrapper.querySelector(
+    `[${VARIANT_ATTR}="${VARIANT_FULL}"], .${CSS.escape(VARIANT_FULL_CLASS)}`
+  );
+}
+
+/**
+ * Variante « full » : pas d'accordéon (cartes à largeur fixe, ni crossfade du
+ * titre ni révélation de description). Chaque carte est indépendante — au survol
+ * elle révèle son loader (opacité 0 → 1) et remplit ses bars (0 → largeur native) ;
+ * au repos tout est masqué (on écrase l'`opacity: 1` que Webflow pose en full).
+ */
+function setupFull(wrapper: HTMLElement): void {
+  const cards = Array.from(wrapper.querySelectorAll<HTMLElement>(CARD));
+  if (!cards.length) return;
+
+  cards.forEach((card) => {
+    const loader = card.querySelector<HTMLElement>(LOADER);
+    const bars = Array.from(card.querySelectorAll<HTMLElement>(LOADER_BAR));
+
+    if (loader) gsap.set(loader, { autoAlpha: 0 });
+    if (bars.length) gsap.set(bars, { width: 0 });
+
+    const reveal = (active: boolean): void => {
+      const duration = reducedMotion() ? 0 : DURATION;
+      if (loader) {
+        gsap.to(loader, {
+          autoAlpha: active ? 1 : 0,
+          duration: duration ? duration * 0.7 : 0,
+          ease: EASE,
+          overwrite: 'auto',
+        });
+      }
+      setLoaderBarsWidth(bars, active);
+    };
+
+    const onEnter = (): void => reveal(true);
+    const onLeave = (): void => reveal(false);
+    card.addEventListener('mouseenter', onEnter);
+    card.addEventListener('mouseleave', onLeave);
+
+    cleanups.push(() => {
+      card.removeEventListener('mouseenter', onEnter);
+      card.removeEventListener('mouseleave', onLeave);
+      const targets = [loader, ...bars].filter(Boolean) as HTMLElement[];
+      if (targets.length) gsap.set(targets, { clearProps: 'all' });
+    });
+  });
+}
+
 /** Re-applique l'état courant (sans animation) : utile après un resize car la
  *  hauteur de ligne suit `font-size: 1vw`. */
 function refreshAll(): void {
@@ -229,7 +346,10 @@ export function initCardsProfils(): void {
   const wrappers = document.querySelectorAll<HTMLElement>(WRAPPER);
   if (!wrappers.length) return;
 
-  wrappers.forEach(setupWrapper);
+  wrappers.forEach((wrapper) => {
+    if (isFullVariant(wrapper)) setupFull(wrapper);
+    else setupWrapper(wrapper);
+  });
 
   if (!resizeBound) {
     window.addEventListener('resize', onResize);

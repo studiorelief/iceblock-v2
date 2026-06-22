@@ -1,0 +1,18 @@
+/* Referals marquee — défilement horizontal infini.
+ * Le wrapper masque le débordement, la liste s'étend en flex sans retour à la
+ * ligne pour aligner tous les logos sur une seule rangée. */
+
+.referals_collection-list-wrapper {
+  overflow: hidden;
+}
+
+.referals_collection-list {
+  display: flex;
+  flex-wrap: nowrap;
+  width: max-content;
+  will-change: transform;
+}
+
+.referals_collection-item {
+  flex: 0 0 auto;
+}

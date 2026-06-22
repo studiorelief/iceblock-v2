@@ -25,6 +25,9 @@ import { setGlassEffectActive } from '$utils/sections/glassEffect';
 
 const BREAKPOINT = 1340;
 const MENU_OPEN_HEIGHT = 'calc(100svh - 7.5rem)';
+// Past this scroll offset the navbar leaves the top of the page and the
+// horizontal gradient fades in.
+const SCROLL_THRESHOLD = 10;
 
 interface NavbarState {
   containerPc: HTMLElement;
@@ -167,6 +170,15 @@ export function initNavbar(): void {
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') closeNav(state);
   });
+
+  // Fade the gradient in once the page is scrolled away from the top.
+  const containers = [containerPc, containerMobile];
+  const syncScrolled = () => {
+    const scrolled = window.scrollY > SCROLL_THRESHOLD;
+    containers.forEach((el) => el.classList.toggle('is-scrolled', scrolled));
+  };
+  syncScrolled();
+  window.addEventListener('scroll', syncScrolled, { passive: true });
 
   // Switch DOM on every resize, only re-applying when the breakpoint is crossed.
   let isMobile = window.innerWidth < BREAKPOINT;

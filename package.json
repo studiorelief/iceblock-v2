@@ -50,7 +50,8 @@
     "@finsweet/ts-utils": "^0.40.0",
     "@marker.io/browser": "^0.20.2",
     "gsap": "^3.15.0",
-    "swiper": "^12.2.0"
+    "swiper": "^12.2.0",
+    "tom-select": "^2.6.1"
   },
   "engines": {
     "pnpm": ">=10"

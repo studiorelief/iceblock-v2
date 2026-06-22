@@ -1,0 +1,6 @@
+/* Meeting popup — see popupMeeting.ts.
+   Scroll lock (.u-popup-open) is shared with popupContact.css. */
+
+[popup-meeting='component'] {
+  display: none;
+}

@@ -1,43 +1,37 @@
 /**
- * Mouse-follow behavior for glass elements.
+ * Autonomous "DVD bounce" drift for glass elements.
  *
- * Each instance is defined by 3 selectors:
- *  - `track`  : where pointer events are listened. Should be a large
- *               area so moving over links/buttons doesn't trigger leave.
- *               Falls back to `bounds` if it can't be found.
- *  - `bounds` : the positioning anchor for the glass. Its rect defines
- *               the coordinate frame for the translate, and the glass
- *               is clamped so it never leaves this box.
- *  - `glass`  : the element that visually follows the cursor (typically
- *               also carrying the `glass-effect` custom attribute).
+ * Each instance is defined by 2 selectors:
+ *  - `bounds` : the container the glass bounces inside. Its rect defines
+ *               the coordinate frame and the walls the glass rebounds on.
+ *  - `glass`  : the element that drifts and bounces (typically also
+ *               carrying the `glass-effect` custom attribute).
  *
  * Strategy: we don't override the element's positioning. Webflow's
  * layout decides where the glass "lives" statically. We read that
  * static center once (via the `offsetParent` chain — transform-agnostic)
- * and apply translate3d as a DELTA from there to the cursor. The
- * delta is clamped so the glass stays fully inside `bounds`.
+ * and apply translate3d as a DELTA from there. A velocity vector moves
+ * the glass each frame; when its edge reaches a wall of `bounds`, the
+ * matching velocity component flips sign — old-school screensaver style.
  *
- * Perf: pointermove writes only raw coords. Geometry is cached and
- * refreshed on scroll / resize. The rAF tick does zero layout reads.
+ * Perf: geometry is cached and refreshed on scroll / resize. The rAF
+ * tick does zero layout reads.
  */
 
 import './glassMouseFollow.css';
 
 interface FollowConfig {
-  track: string;
   bounds: string;
   glass: string;
 }
 
-// Add new follow zones here. Each entry is independent.
+// Add new bounce zones here. Each entry is independent.
 const INSTANCES: FollowConfig[] = [
   {
-    track: '.section_home-hero',
     bounds: '.home-hero_glass-wrapper',
     glass: '.home-hero_glass-mouse',
   },
   {
-    track: '.footer_cta-wrapper',
     bounds: '.footer_glass-wrapper',
     glass: '.footer_glass-mouse',
   },
@@ -45,33 +39,25 @@ const INSTANCES: FollowConfig[] = [
 
 const FOLLOW_CLASS = 'glass-follow';
 
-// 0 → frozen, 1 → instant.
-// Follow: snappy with a touch of trail while the cursor is inside.
-// Return: slow drift back to rest when the cursor leaves.
-const FOLLOW_SMOOTHING = 0.04;
-const RETURN_SMOOTHING = 0.04;
+// Drift speed in pixels per frame (~60fps). Lower = slower, dreamier.
+const SPEED = 1;
 
 interface FollowState {
-  track: HTMLElement;
   bounds: HTMLElement;
   glass: HTMLElement;
-  rectLeft: number;
-  rectTop: number;
   boundsWidth: number;
   boundsHeight: number;
   staticCenterX: number;
   staticCenterY: number;
   glassHalfW: number;
   glassHalfH: number;
-  pointerX: number;
-  pointerY: number;
-  hasPointer: boolean;
-  currentX: number;
-  currentY: number;
+  // Glass center position within `bounds`, in bounds-relative px.
+  centerX: number;
+  centerY: number;
+  velocityX: number;
+  velocityY: number;
+  initialized: boolean;
   rafId: number;
-  onPointerMove: (event: PointerEvent) => void;
-  onPointerLeave: () => void;
-  onScroll: () => void;
   resizeObserver: ResizeObserver;
 }
 
@@ -79,9 +65,8 @@ const states = new Set<FollowState>();
 
 /**
  * Compute the glass element's static center in coordinates relative to
- * the bounds element's border-edge (= `bounds.getBoundingClientRect().left`
- * reference frame). Uses `offsetLeft`/`offsetParent` so the result is
- * independent of any currently-applied `transform`.
+ * the bounds element's border-edge. Uses `offsetLeft`/`offsetParent` so
+ * the result is independent of any currently-applied `transform`.
  */
 function staticCenterWithinBounds(
   glass: HTMLElement,
@@ -97,8 +82,6 @@ function staticCenterWithinBounds(
     cur = cur.offsetParent as HTMLElement | null;
     safety -= 1;
   }
-  // offsetLeft is relative to the offsetParent's padding-edge.
-  // boundsRect.left is the border-edge — shift by bounds' border widths.
   x += bounds.clientLeft + glass.offsetWidth / 2;
   y += bounds.clientTop + glass.offsetHeight / 2;
   return { x, y };
@@ -106,8 +89,6 @@ function staticCenterWithinBounds(
 
 function refreshGeometry(s: FollowState): void {
   const r = s.bounds.getBoundingClientRect();
-  s.rectLeft = r.left;
-  s.rectTop = r.top;
   s.boundsWidth = r.width;
   s.boundsHeight = r.height;
   const c = staticCenterWithinBounds(s.glass, s.bounds);
@@ -115,14 +96,27 @@ function refreshGeometry(s: FollowState): void {
   s.staticCenterY = c.y;
   s.glassHalfW = s.glass.offsetWidth / 2;
   s.glassHalfH = s.glass.offsetHeight / 2;
+
+  // Start the glass at its static center the first time geometry is ready.
+  if (!s.initialized && s.boundsWidth > 0 && s.boundsHeight > 0) {
+    s.centerX = s.staticCenterX;
+    s.centerY = s.staticCenterY;
+    s.initialized = true;
+  }
+
+  // Keep the glass inside the box if the container shrank under it.
+  const minX = s.glassHalfW;
+  const maxX = s.boundsWidth - s.glassHalfW;
+  const minY = s.glassHalfH;
+  const maxY = s.boundsHeight - s.glassHalfH;
+  if (maxX > minX) s.centerX = Math.max(minX, Math.min(maxX, s.centerX));
+  if (maxY > minY) s.centerY = Math.max(minY, Math.min(maxY, s.centerY));
 }
 
 function setupInstance(config: FollowConfig): FollowState | null {
   const bounds = document.querySelector<HTMLElement>(config.bounds);
   const glass = document.querySelector<HTMLElement>(config.glass);
   if (!bounds || !glass) return null;
-
-  const track = document.querySelector<HTMLElement>(config.track) ?? bounds;
 
   // Ensure bounds is a positioning context for the offsetParent walk.
   if (getComputedStyle(bounds).position === 'static') {
@@ -131,37 +125,23 @@ function setupInstance(config: FollowConfig): FollowState | null {
 
   glass.classList.add(FOLLOW_CLASS);
 
+  // Départ vers le haut-gauche (X et Y négatifs). Le rebond fait diverger les
+  // instances ensuite, pas besoin de les désynchroniser au départ.
   const local: FollowState = {
-    track,
     bounds,
     glass,
-    rectLeft: 0,
-    rectTop: 0,
     boundsWidth: 0,
     boundsHeight: 0,
     staticCenterX: 0,
     staticCenterY: 0,
     glassHalfW: 0,
     glassHalfH: 0,
-    pointerX: 0,
-    pointerY: 0,
-    hasPointer: false,
-    currentX: 0,
-    currentY: 0,
+    centerX: 0,
+    centerY: 0,
+    velocityX: -SPEED,
+    velocityY: -SPEED,
+    initialized: false,
     rafId: 0,
-    onPointerMove: (event) => {
-      local.pointerX = event.clientX;
-      local.pointerY = event.clientY;
-      local.hasPointer = true;
-    },
-    onPointerLeave: () => {
-      local.hasPointer = false;
-    },
-    onScroll: () => {
-      const r = bounds.getBoundingClientRect();
-      local.rectLeft = r.left;
-      local.rectTop = r.top;
-    },
     resizeObserver: new ResizeObserver(() => refreshGeometry(local)),
   };
 
@@ -169,28 +149,44 @@ function setupInstance(config: FollowConfig): FollowState | null {
   glass.style.transform = 'translate3d(0, 0, 0)';
 
   const tick = () => {
-    let targetX = local.hasPointer ? local.pointerX - local.rectLeft - local.staticCenterX : 0;
-    let targetY = local.hasPointer ? local.pointerY - local.rectTop - local.staticCenterY : 0;
+    if (local.initialized) {
+      const minX = local.glassHalfW;
+      const maxX = local.boundsWidth - local.glassHalfW;
+      const minY = local.glassHalfH;
+      const maxY = local.boundsHeight - local.glassHalfH;
 
-    // Clamp so the glass stays fully inside the bounds element, even when
-    // the cursor wanders over neighboring content (cards, etc.).
-    const minX = local.glassHalfW - local.staticCenterX;
-    const maxX = local.boundsWidth - local.glassHalfW - local.staticCenterX;
-    const minY = local.glassHalfH - local.staticCenterY;
-    const maxY = local.boundsHeight - local.glassHalfH - local.staticCenterY;
-    if (maxX > minX) targetX = Math.max(minX, Math.min(maxX, targetX));
-    if (maxY > minY) targetY = Math.max(minY, Math.min(maxY, targetY));
+      local.centerX += local.velocityX;
+      local.centerY += local.velocityY;
 
-    const smoothing = local.hasPointer ? FOLLOW_SMOOTHING : RETURN_SMOOTHING;
-    local.currentX += (targetX - local.currentX) * smoothing;
-    local.currentY += (targetY - local.currentY) * smoothing;
-    glass.style.transform = `translate3d(${local.currentX}px, ${local.currentY}px, 0)`;
+      // Bounce off the vertical walls.
+      if (maxX > minX) {
+        if (local.centerX <= minX) {
+          local.centerX = minX;
+          local.velocityX = Math.abs(local.velocityX);
+        } else if (local.centerX >= maxX) {
+          local.centerX = maxX;
+          local.velocityX = -Math.abs(local.velocityX);
+        }
+      }
+      // Bounce off the horizontal walls.
+      if (maxY > minY) {
+        if (local.centerY <= minY) {
+          local.centerY = minY;
+          local.velocityY = Math.abs(local.velocityY);
+        } else if (local.centerY >= maxY) {
+          local.centerY = maxY;
+          local.velocityY = -Math.abs(local.velocityY);
+        }
+      }
+
+      // Translate is the delta from the static center.
+      const dx = local.centerX - local.staticCenterX;
+      const dy = local.centerY - local.staticCenterY;
+      glass.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+    }
     local.rafId = requestAnimationFrame(tick);
   };
 
-  track.addEventListener('pointermove', local.onPointerMove, { passive: true });
-  track.addEventListener('pointerleave', local.onPointerLeave, { passive: true });
-  window.addEventListener('scroll', local.onScroll, { passive: true });
   local.resizeObserver.observe(bounds);
   local.resizeObserver.observe(glass);
 
@@ -209,9 +205,6 @@ export function initGlassMouseFollow(): void {
 export function destroyGlassMouseFollow(): void {
   states.forEach((s) => {
     cancelAnimationFrame(s.rafId);
-    s.track.removeEventListener('pointermove', s.onPointerMove);
-    s.track.removeEventListener('pointerleave', s.onPointerLeave);
-    window.removeEventListener('scroll', s.onScroll);
     s.resizeObserver.disconnect();
     s.glass.classList.remove(FOLLOW_CLASS);
     s.glass.style.transform = '';

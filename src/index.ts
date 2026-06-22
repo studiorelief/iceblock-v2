@@ -2,7 +2,9 @@ import './index.css';
 
 import { initFormSubmit } from '$utils/component/formSubmit';
 import { initNavbar } from '$utils/component/navbar';
+import { initNewsRegion } from '$utils/component/newsRegion';
 import { initPopupContact } from '$utils/component/popupContact';
+import { initPopupMeeting } from '$utils/component/popupMeeting';
 import { initPopupNews } from '$utils/component/popupNews';
 import { initFsAttributesScripts } from '$utils/scripts/loadFsAttributes';
 import { initFsLibrairiesScripts } from '$utils/scripts/loadFsLibrairies';
@@ -12,6 +14,7 @@ import { initResponsiveFeatures } from '$utils/scripts/responsiveFeatures';
 import { initBlogSlider } from '$utils/sections/blogSlider';
 import { initFooterLogo } from '$utils/sections/footerLogo';
 import { initGlassEffect } from '$utils/sections/glassEffect';
+import { initReferalsMarquee } from '$utils/sections/referalsMarquee';
 
 window.Webflow ||= [];
 window.Webflow.push(() => {
@@ -24,6 +27,7 @@ window.Webflow.push(() => {
 
   initBlogSlider();
   initFooterLogo();
+  initReferalsMarquee();
 
   initNavbar();
 
@@ -33,5 +37,7 @@ window.Webflow.push(() => {
 
   initPopupContact();
   initPopupNews();
+  initPopupMeeting();
+  initNewsRegion();
   initFormSubmit();
 });

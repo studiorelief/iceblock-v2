@@ -1,20 +1,24 @@
 /**
- * Contact popup.
+ * Meeting popup.
  *
- * Markup is driven by the `popup-contact` attribute:
+ * Markup is driven by the `popup-meeting` attribute:
  *  - `component`  : the popup root. Starts `display:none`, switched to
  *                   `display:flex` while open.
  *  - `background` : the backdrop, fades in first.
- *  - `form`       : the contact form, slides up (y: 4rem → 0) + fades in.
+ *  - `card`       : (optional) the panel that slides up (y: 4rem → 0) + fades
+ *                   in. Falls back to the component when absent.
  *  - `open`       : triggers (can be many on a page).
  *  - `close`      : close trigger(s).
  *
- * Open animation: background fade-in, then form slide + fade.
+ * Open animation: background fade-in, then card slide + fade.
  * Page scroll is locked while open. Closes on Escape or a `close` trigger,
  * playing the open animation in reverse before hiding the root.
+ *
+ * The popup also opens automatically on page load when the URL carries a
+ * `meeting` query param (e.g. `/?meeting`).
  */
 
-import './popupContact.css';
+import './popupMeeting.css';
 
 import gsap from 'gsap';
 
@@ -23,7 +27,7 @@ const SCROLL_LOCK_CLASS = 'u-popup-open';
 interface PopupState {
   component: HTMLElement;
   background: HTMLElement;
-  form: HTMLElement;
+  card: HTMLElement;
   isOpen: boolean;
   timeline: gsap.core.Timeline | null;
 }
@@ -49,7 +53,7 @@ function openPopup(state: PopupState): void {
   state.timeline
     .fromTo(state.background, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'power2.out' })
     .fromTo(
-      state.form,
+      state.card,
       { opacity: 0, y: '4rem' },
       { opacity: 1, y: '0rem', duration: 0.4, ease: 'power2.out' },
       '>-0.1'
@@ -70,29 +74,32 @@ function closePopup(state: PopupState): void {
 
   state.timeline = gsap.timeline({ onComplete: hide });
   state.timeline
-    .to(state.form, { opacity: 0, y: '4rem', duration: 0.25, ease: 'power2.in' })
+    .to(state.card, { opacity: 0, y: '4rem', duration: 0.25, ease: 'power2.in' })
     .to(state.background, { opacity: 0, duration: 0.25, ease: 'power2.in' }, '>-0.1');
 }
 
-export function initPopupContact(): void {
-  const component = document.querySelector<HTMLElement>('[popup-contact="component"]');
-  const background = document.querySelector<HTMLElement>('[popup-contact="background"]');
-  const form = document.querySelector<HTMLElement>('[popup-contact="form"]');
-  if (!component || !background || !form) return;
+export function initPopupMeeting(): void {
+  const component = document.querySelector<HTMLElement>('[popup-meeting="component"]');
+  const background = document.querySelector<HTMLElement>('[popup-meeting="background"]');
+  if (!component || !background) return;
 
-  const state: PopupState = { component, background, form, isOpen: false, timeline: null };
+  // The sliding panel is optional — fall back to the component itself.
+  const card = document.querySelector<HTMLElement>('[popup-meeting="card"]') ?? component;
 
-  document.querySelectorAll<HTMLElement>('[popup-contact="open"]').forEach((trigger) => {
+  const state: PopupState = { component, background, card, isOpen: false, timeline: null };
+
+  document.querySelectorAll<HTMLElement>('[popup-meeting="open"]').forEach((trigger) => {
     trigger.addEventListener('click', (event) => {
       event.preventDefault();
       openPopup(state);
     });
   });
 
-  document.querySelectorAll<HTMLElement>('[popup-contact="close"]').forEach((trigger) => {
+  // The meeting close trigger closes every popup on the page, not just this one.
+  document.querySelectorAll<HTMLElement>('[popup-meeting="close"]').forEach((trigger) => {
     trigger.addEventListener('click', (event) => {
       event.preventDefault();
-      closePopup(state);
+      window.dispatchEvent(new CustomEvent('popup:close-all'));
     });
   });
 
@@ -101,4 +108,9 @@ export function initPopupContact(): void {
   });
 
   window.addEventListener('popup:close-all', () => closePopup(state));
+
+  // Open on load when the URL carries a `meeting` query param (e.g. `/?meeting`).
+  if (new URLSearchParams(window.location.search).has('meeting')) {
+    openPopup(state);
+  }
 }
