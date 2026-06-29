@@ -12,11 +12,14 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(
-    90deg,
-    rgba(233, 236, 239, 0.4) 0%,
-    rgba(233, 236, 239, 0.8) 50%,
-    rgba(233, 236, 239, 0.4) 100%
+  background: var(
+    --gradient-navbar,
+    linear-gradient(
+      90deg,
+      rgba(233, 236, 239, 0.5) 0%,
+      rgba(233, 236, 239, 0.9) 50%,
+      rgba(233, 236, 239, 0.5) 100%
+    )
   );
   opacity: 0;
   transition: opacity 0.3s ease-out;
@@ -27,6 +30,24 @@
 [navbar='container-pc'].is-scrolled::after,
 [navbar='container-mobile'].is-scrolled::after {
   opacity: 1;
+}
+
+/* Smooth the blur/opacity changes both ways. Keeps the glass effect's opacity
+   transition and adds the backdrop-filter so the blur ramps in on scroll. */
+[navbar='container-pc'],
+[navbar='container-mobile'] {
+  transition:
+    opacity 0.26s ease-out,
+    backdrop-filter 0.3s ease-out,
+    -webkit-backdrop-filter 0.3s ease-out;
+}
+
+/* Stronger backdrop blur once scrolled away from the top.
+   👉 Ajuste la valeur ci-dessous à la main (ex. 4px, 6px, 10px…).
+   Le !important est nécessaire car le glass pose --glass-backdrop-blur inline. */
+[navbar='container-pc'].is-scrolled,
+[navbar='container-mobile'].is-scrolled {
+  --glass-backdrop-blur: 8px !important;
 }
 
 /* Border on the mobile container only while the nav is open. */
