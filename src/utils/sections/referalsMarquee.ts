@@ -33,6 +33,31 @@ const reducedMotion = (): boolean => window.matchMedia('(prefers-reduced-motion:
 const cleanups: Array<() => void> = [];
 
 /**
+ * Attend que toutes les images d'un élément soient chargées avant de résoudre.
+ *
+ * Indispensable : `initReferalsMarquee` tourne au `Webflow.push` (≈
+ * DOMContentLoaded), avant le chargement des logos. Mesurer `scrollWidth` à ce
+ * moment-là renvoie ~0 (images sans dimensions), ce qui fausse le remplissage
+ * et donne une durée d'animation quasi nulle — le marquee semble figé. On
+ * mesure donc seulement une fois les images prêtes.
+ */
+function waitForImages(el: HTMLElement): Promise<void> {
+  const images = Array.from(el.querySelectorAll('img'));
+  const pending = images.filter((img) => !img.complete);
+  if (!pending.length) return Promise.resolve();
+
+  return Promise.all(
+    pending.map(
+      (img) =>
+        new Promise<void>((resolve) => {
+          img.addEventListener('load', () => resolve(), { once: true });
+          img.addEventListener('error', () => resolve(), { once: true });
+        })
+    )
+  ).then(() => undefined);
+}
+
+/**
  * Duplique le set d'origine ENTIER (tous les items) autant de fois que
  * nécessaire pour que la largeur cumulée atteigne au moins celle du wrapper.
  *
@@ -55,10 +80,7 @@ function fillToWidth(list: HTMLElement, wrapperWidth: number): void {
   }
 }
 
-function setupMarquee(wrapper: HTMLElement): void {
-  const list = wrapper.querySelector<HTMLElement>(LIST);
-  if (!list || !list.querySelector(ITEM)) return;
-
+function buildMarquee(wrapper: HTMLElement, list: HTMLElement): void {
   // 1. Remplir si pas assez de logos pour couvrir le wrapper.
   fillToWidth(list, wrapper.clientWidth);
 
@@ -75,6 +97,8 @@ function setupMarquee(wrapper: HTMLElement): void {
   // 3. Animer : -50 % translate exactement la première moitié hors champ et
   // reboucle. Durée proportionnelle à la largeur pour une vitesse constante.
   const halfWidth = list.scrollWidth / 2;
+  if (halfWidth <= 0) return;
+
   const tween = gsap.to(list, {
     xPercent: -50,
     duration: halfWidth / SPEED,
@@ -83,6 +107,14 @@ function setupMarquee(wrapper: HTMLElement): void {
   });
 
   cleanups.push(() => tween.kill());
+}
+
+function setupMarquee(wrapper: HTMLElement): void {
+  const list = wrapper.querySelector<HTMLElement>(LIST);
+  if (!list || !list.querySelector(ITEM)) return;
+
+  // On attend les logos avant de mesurer (voir `waitForImages`).
+  void waitForImages(wrapper).then(() => buildMarquee(wrapper, list));
 }
 
 export function initReferalsMarquee(): void {
